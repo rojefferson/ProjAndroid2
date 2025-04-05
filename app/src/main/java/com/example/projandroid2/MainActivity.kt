@@ -51,9 +51,13 @@ class MainActivity : AppCompatActivity() {
             .setContentText("Você favoritou: ${ubs.nome_oficial}")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-        // with(NotificationManagerCompat.from(this)) {
-        //   notify(ubs.nome_oficial.hashCode(), builder.build())
-        //}
+        if (NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            with(NotificationManagerCompat.from(this)) {
+                notify(ubs.nome_oficial.hashCode(), builder.build())
+            }
+        } else {
+            Toast.makeText(this, "Por favor, habilite as notificações", Toast.LENGTH_SHORT).show()
+        }
     }
     private fun salvarFavorito(ubsSelecionada: Ubs) {
         val db = AppDatabase.getDatabase(this)
@@ -65,16 +69,10 @@ class MainActivity : AppCompatActivity() {
                 bairro = ubsSelecionada.bairro,
                 especialidade = ubsSelecionada.especialidade
             )
-
-            // Salva no banco
             favoritoDao.inserir(favorito)
-
-            // Adiciona à lista local se ainda não estiver
             if (!ubsFavoritas.any { it.nome_oficial == ubsSelecionada.nome_oficial }) {
                 ubsFavoritas.add(ubsSelecionada)
             }
-
-            // Notificação
             mostrarNotificacaoFavorito(ubsSelecionada)
         }
     }
@@ -89,14 +87,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//    private fun agendarAtualizacaoPeriodica() {
-//        val workRequest = PeriodicWorkRequestBuilder<com.example.projmobile.worker.UbsWorker>(15, TimeUnit.MINUTES).build()
-//        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-//            "UBS_WORK",
-//            ExistingPeriodicWorkPolicy.UPDATE,
-//            workRequest
-//        )
-//    }
+    private fun agendarAtualizacaoPeriodica() {
+        val workRequest = PeriodicWorkRequestBuilder<com.example.projandroid2.worker.UbsWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "UBS_WORK",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
         }
 
-        //agendarAtualizacaoPeriodica()
+        agendarAtualizacaoPeriodica()
 
 
         WorkManager.getInstance(this)

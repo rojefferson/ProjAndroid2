@@ -9,6 +9,9 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 class LoginActivity : AppCompatActivity() {
 
@@ -17,16 +20,18 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvCadastrar: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
         setContentView(R.layout.activity_login)
+
 
         // Inicializar componentes
         etEmail = findViewById(R.id.etEmail)
         etSenha = findViewById(R.id.etSenha)
         btnLogin = findViewById(R.id.btnLogin)
-        tvCadastrar = findViewById(R.id.tvCadastrar)
         progressBar = findViewById(R.id.progressBar)
 
         // Configurar listeners
@@ -34,11 +39,7 @@ class LoginActivity : AppCompatActivity() {
             realizarLogin()
         }
 
-        tvCadastrar.setOnClickListener {
-            // Intent para tela de cadastro
-            //val intent = Intent(this, CadastroActivity::class.java)
-            startActivity(intent)
-        }
+
     }
 
     private fun realizarLogin() {
@@ -50,18 +51,31 @@ class LoginActivity : AppCompatActivity() {
             btnLogin.isEnabled = false
 
             try {
-                if (email == "admin" && senha == "admin") {
-                    // Login bem-sucedido
-                    val intent = Intent(this, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                } else {
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Email ou senha incorretos",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                auth.signInWithEmailAndPassword(email, senha)
+                    .addOnCompleteListener(this) { task ->
+                        if (task.isSuccessful) {
+                            // Sign in success, update UI with the signed-in user's information
+
+                            val user = auth.currentUser
+                            val intent = Intent(
+                                this,
+                                MainActivity::class.java
+                            )
+                            startActivity(intent)
+                            finish()
+
+                        } else {
+                            Toast.makeText(
+                                baseContext,
+                                "Authentication failed.",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+
+                        }
+                    }
+
+
+
             } catch (e: Exception) {
                 Toast.makeText(
                     this@LoginActivity,
@@ -77,25 +91,25 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun validarCampos(email: String, senha: String): Boolean {
-//        if (email.isEmpty()) {
-//            etEmail.error = "Email é obrigatório"
-//            return false
-//        }
-//
-//        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-//            etEmail.error = "Email inválido"
-//            return false
-//        }
+        if (email.isEmpty()) {
+            etEmail.error = "Email é obrigatório"
+            return false
+        }
 
-//        if (senha.isEmpty()) {
-//            etSenha.error = "Senha é obrigatória"
-//            return false
-//        }
-//
-//        if (senha.length < 6) {
-//            etSenha.error = "Senha deve ter pelo menos 6 caracteres"
-//            return false
-//        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.error = "Email inválido"
+            return false
+        }
+
+        if (senha.isEmpty()) {
+            etSenha.error = "Senha é obrigatória"
+            return false
+        }
+
+        if (senha.length < 6) {
+            etSenha.error = "Senha deve ter pelo menos 6 caracteres"
+            return false
+        }
 
         return true
     }
