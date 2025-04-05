@@ -9,9 +9,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class LoginActivity : AppCompatActivity() {
 
@@ -20,12 +17,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var tvCadastrar: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-        auth = Firebase.auth
 
         // Inicializar componentes
         etEmail = findViewById(R.id.etEmail)
@@ -40,7 +35,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         tvCadastrar.setOnClickListener {
-            //val intent = Intent(this, CadastroActivity::class.java) // Descomente esta linha
+            // Intent para tela de cadastro
+            //val intent = Intent(this, CadastroActivity::class.java)
             startActivity(intent)
         }
     }
@@ -50,38 +46,34 @@ class LoginActivity : AppCompatActivity() {
         val senha = etSenha.text?.toString()?.trim() ?: ""
 
         if (validarCampos(email, senha)) {
-            autenticarUsuario(email, senha)
-        }
-    }
+            progressBar.visibility = View.VISIBLE
+            btnLogin.isEnabled = false
 
-    private fun autenticarUsuario(email: String, senha: String) {
-        progressBar.visibility = View.VISIBLE
-        btnLogin.isEnabled = false
-
-        auth.signInWithEmailAndPassword(email, senha)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
+            try {
+                if (email == "admin" && senha == "admin") {
                     // Login bem-sucedido
-                    val user = auth.currentUser
-                    //val intent = Intent(this, MainActivity::class.java)
-                    //startActivity(intent)
-                    //finish()
-                    Toast.makeText(
-                        this,
-                        "Autenticação funcionou: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 } else {
-                    // Login falhou
                     Toast.makeText(
-                        this,
-                        "Autenticação falhou: ${task.exception?.message}",
+                        this@LoginActivity,
+                        "Email ou senha incorretos",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Erro: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+                e.printStackTrace()
+            } finally {
                 progressBar.visibility = View.GONE
                 btnLogin.isEnabled = true
             }
+        }
     }
 
     private fun validarCampos(email: String, senha: String): Boolean {
